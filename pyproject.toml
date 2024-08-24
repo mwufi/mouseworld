@@ -9,6 +9,8 @@ dependencies = [
     "numpy>=2.1.0",
     "pygame>=2.6.0",
     "pygame-gui>=0.6.12",
+    "psutil>=6.0.0",
+    "tqdm>=4.66.5",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"

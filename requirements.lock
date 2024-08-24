@@ -12,6 +12,8 @@
 -e file:.
 numpy==2.1.0
     # via mouseworld
+psutil==6.0.0
+    # via mouseworld
 pygame==2.6.0
     # via mouseworld
 pygame-ce==2.5.1
@@ -20,3 +22,5 @@ pygame-gui==0.6.12
     # via mouseworld
 python-i18n==0.3.9
     # via pygame-gui
+tqdm==4.66.5
+    # via mouseworld

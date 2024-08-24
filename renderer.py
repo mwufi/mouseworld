@@ -235,7 +235,7 @@ class PygameRenderer:
 
 # Example usage
 if __name__ == "__main__":
-    m = MouseWorld(size=(10, 10))
+    m = MouseWorld(size=(20, 10))
     m.add(Agent(position=(0, 0)))
     m.add(Food(position=(1, 1)))
     m.add(Wall(position=(2, 2)))
