@@ -60,7 +60,13 @@ class MouseWorld:
         half = view_size // 2
         x_min, x_max = max(0, x - half), min(self.size[0], x + half + 1)
         y_min, y_max = max(0, y - half), min(self.size[1], y + half + 1)
-        return self.grid[x_min:x_max, y_min:y_max]
+
+        # Create a view_size x view_size array filled with EMPTY
+        observation = np.full((view_size, view_size), self.EMPTY)
+        width = x_max - x_min
+        height = y_max - y_min
+        observation[:width, :height] = self.grid[x_min:x_max, y_min:y_max]
+        return observation
 
     def move_agent(self, agent_position: Tuple[int, int], direction: Tuple[int, int]):
         new_x = agent_position[0] + direction[0]
