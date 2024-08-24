@@ -12,11 +12,6 @@ MouseWorld is a flexible and interactive research environment designed for study
 - Interactive visualization using Pygame
 - Benchmarking tools for performance analysis
 
-## Benchmark
-
-![MouseWorld Benchmark](/docs/benchmark.png)
-_Benchmark results for different world sizes and configurations_
-
 ## Quick Start
 
 Here's a simple example to get you started with MouseWorld:
@@ -33,3 +28,10 @@ world.add(Wall(position=(2, 2)))
 p = PygameRenderer(world)
 p.play()
 ```
+
+## Current Work
+
+MouseWorld is pretty minimal! Let's see if it can be useful for study!
+
+![MouseWorld Benchmark](/docs/benchmark.png)
+_Benchmark results for different world sizes and configurations_
