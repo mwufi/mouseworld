@@ -1,34 +1,9 @@
 import pygame
+import pygame_gui
 import sys
 
 from mouseworld import MouseWorld, Agent, Food, Wall
-
-
-class EntityRenderer:
-    def __init__(self, cell_size: int):
-        self.cell_size = cell_size
-
-    def draw_agent(self, screen, position, color):
-        x, y = position
-        center = (int((x + 0.5) * self.cell_size), int((y + 0.5) * self.cell_size))
-        pygame.draw.circle(screen, color, center, self.cell_size // 3)
-
-    def draw_food(self, screen, position, color):
-        x, y = position
-        center = (int((x + 0.5) * self.cell_size), int((y + 0.5) * self.cell_size))
-        points = [
-            (center[0], center[1] - self.cell_size // 3),
-            (center[0] - self.cell_size // 3, center[1] + self.cell_size // 3),
-            (center[0] + self.cell_size // 3, center[1] + self.cell_size // 3),
-        ]
-        pygame.draw.polygon(screen, color, points)
-
-    def draw_wall(self, screen, position, color):
-        x, y = position
-        rect = pygame.Rect(
-            x * self.cell_size, y * self.cell_size, self.cell_size, self.cell_size
-        )
-        pygame.draw.rect(screen, color, rect)
+from entity_render import EntityRenderer
 
 
 class PygameRenderer:
@@ -36,8 +11,10 @@ class PygameRenderer:
         self.world = world
         self.cell_size = 50
         pygame.init()
-        self.screen_width = world.size[0] * self.cell_size
-        self.screen_height = world.size[1] * self.cell_size + 50  # Extra space for tabs
+        self.world_width = world.size[0] * self.cell_size
+        self.world_height = world.size[1] * self.cell_size
+        self.screen_width = self.world_width * 2 + 50  # Extra space for padding
+        self.screen_height = self.world_height + 100  # Extra space for UI
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("MouseWorld")
         self.colors = {
@@ -45,8 +22,6 @@ class PygameRenderer:
             world.FOOD: (255, 255, 0),  # Yellow
             world.WALL: (128, 128, 128),  # Gray
         }
-        self.font = pygame.font.Font(None, 36)
-        self.small_font = pygame.font.Font(None, 24)
         self.entity_renderer = EntityRenderer(self.cell_size)
         self.renderers = {
             world.AGENT: self.entity_renderer.draw_agent,
@@ -56,37 +31,43 @@ class PygameRenderer:
         self.view_mode = "global"
         self.action_history = []
 
-    def draw_entity(self, entity_type, position):
+        # Initialize pygame_gui
+        self.ui_manager = pygame_gui.UIManager((self.screen_width, self.screen_height))
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.global_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((0, 0), (self.screen_width // 2, 50)),
+            text="Global View",
+            manager=self.ui_manager,
+        )
+        self.agent_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(
+                (self.screen_width // 2, 0), (self.screen_width // 2, 50)
+            ),
+            text="Agent View",
+            manager=self.ui_manager,
+        )
+        self.score_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((10, 60), (200, 30)),
+            text=f"Score: {self.world.score}",
+            manager=self.ui_manager,
+        )
+
+    def draw_entity(self, entity_type, position, surface, offset=(0, 0)):
         if entity_type in self.renderers:
             x, y = position
-            adjusted_position = (x, y + 1)  # Adjust y-position to account for tabs
+            adjusted_position = (x + offset[0], y + offset[1])
             self.renderers[entity_type](
-                self.screen, adjusted_position, self.colors[entity_type]
+                surface, adjusted_position, self.colors[entity_type]
             )
 
-    def draw_tabs(self):
-        global_tab = pygame.Rect(0, 0, self.screen_width // 2, 50)
-        agent_tab = pygame.Rect(self.screen_width // 2, 0, self.screen_width // 2, 50)
-
-        pygame.draw.rect(self.screen, (200, 200, 200), global_tab)
-        pygame.draw.rect(self.screen, (200, 200, 200), agent_tab)
-
-        global_text = self.font.render("Global View", True, (0, 0, 0))
-        agent_text = self.font.render("Agent View", True, (0, 0, 0))
-
-        self.screen.blit(
-            global_text, (global_tab.centerx - global_text.get_width() // 2, 10)
-        )
-        self.screen.blit(
-            agent_text, (agent_tab.centerx - agent_text.get_width() // 2, 10)
-        )
-
-    def draw_global_view(self):
+    def draw_global_view(self, surface, offset=(0, 0)):
         for entity_type, positions in self.world.positions.items():
             for position in positions:
-                self.draw_entity(entity_type, position)
+                self.draw_entity(entity_type, position, surface, offset)
 
-    def draw_agent_view(self):
+    def draw_agent_view(self, surface, offset=(0, 0)):
         if (
             self.world.AGENT in self.world.positions
             and self.world.positions[self.world.AGENT]
@@ -98,35 +79,27 @@ class PygameRenderer:
             for i in range(3):
                 for j in range(3):
                     entity_type = observation[i, j]
-                    position = (i + 3, j + 3)  # Offset to center of screen
-                    self.draw_entity(entity_type, position)
-
-            # Draw action history
-            history_text = self.small_font.render(
-                "Action History:", True, (255, 255, 255)
-            )
-            self.screen.blit(history_text, (10, self.screen_height - 150))
-
-            for i, action in enumerate(self.action_history[-5:]):
-                action_text = self.small_font.render(f"{action}", True, (255, 255, 255))
-                self.screen.blit(action_text, (10, self.screen_height - 120 + i * 20))
+                    position = (i + offset[0], j + offset[1])
+                    self.draw_entity(entity_type, position, surface)
 
     def draw_world(self):
         self.screen.fill((0, 0, 0))  # Black background
-        self.draw_tabs()
 
-        if self.view_mode == "global":
-            self.draw_global_view()
-        else:
-            self.draw_agent_view()
+        # Draw global view
+        global_surface = pygame.Surface((self.world_width, self.world_height))
+        global_surface.fill((0, 0, 0))
+        self.draw_global_view(global_surface)
+        self.screen.blit(global_surface, (0, 100))
+        pygame.draw.rect(self.screen, (255, 255, 255), (0, 100, self.world_width, self.world_height), 2)
 
-        # Draw score
-        score_text = self.font.render(
-            f"Score: {self.world.score}", True, (255, 255, 255)
-        )
-        self.screen.blit(score_text, (10, 60))
+        # Draw agent view
+        agent_surface = pygame.Surface((3 * self.cell_size, 3 * self.cell_size))
+        agent_surface.fill((0, 0, 0))
+        self.draw_agent_view(agent_surface)
+        self.screen.blit(agent_surface, (self.world_width + 25, 100))
+        pygame.draw.rect(self.screen, (255, 255, 255), (self.world_width + 25, 100, 3 * self.cell_size, 3 * self.cell_size), 2)
 
-        # Update the display to show the newly drawn frame
+        self.ui_manager.draw_ui(self.screen)
         pygame.display.flip()
 
     def play(self):
@@ -136,6 +109,8 @@ class PygameRenderer:
         action_timer = 0
         action_delay = 1000 / 10  # 10 actions per second (1000ms / 10)
         while running:
+            time_delta = clock.tick(60) / 1000.0
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -159,16 +134,21 @@ class PygameRenderer:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:  # Left mouse button
                         x, y = event.pos
-                        if y < 50:  # Click on tabs
-                            self.view_mode = (
-                                "global" if x < self.screen_width // 2 else "agent"
-                            )
-                        else:
+                        if 100 < y < self.world_height + 100 and x < self.world_width:
                             grid_x, grid_y = (
                                 x // self.cell_size,
-                                (y - 50) // self.cell_size,
+                                (y - 100) // self.cell_size,
                             )
                             self.world.add(Food(position=(grid_x, grid_y)))
+                elif event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == self.global_button:
+                        self.view_mode = "global"
+                    elif event.ui_element == self.agent_button:
+                        self.view_mode = "agent"
+
+                self.ui_manager.process_events(event)
+
+            self.ui_manager.update(time_delta)
 
             current_time = pygame.time.get_ticks()
             if action and current_time - action_timer > action_delay:
@@ -176,8 +156,8 @@ class PygameRenderer:
                 self.action_history.append(action)
                 action_timer = current_time
 
+            self.score_label.set_text(f"Score: {self.world.score}")
             self.draw_world()
-            clock.tick(60)  # 60 FPS
 
         pygame.quit()
         sys.exit()
