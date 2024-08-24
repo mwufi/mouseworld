@@ -6,6 +6,35 @@ from mouseworld import MouseWorld, Agent, Food, Wall
 from entity_render import EntityRenderer
 
 
+action_delay = 1000 / 10  # 10 actions per second (1000ms / 10)
+
+# Define named actions
+ACTION_LEFT = "move_left"
+ACTION_RIGHT = "move_right"
+ACTION_UP = "move_up"
+ACTION_DOWN = "move_down"
+
+# Map controls to named actions
+controls_to_actions = {
+    pygame.K_LEFT: ACTION_LEFT,
+    pygame.K_a: ACTION_LEFT,
+    pygame.K_RIGHT: ACTION_RIGHT,
+    pygame.K_d: ACTION_RIGHT,
+    pygame.K_UP: ACTION_UP,
+    pygame.K_w: ACTION_UP,
+    pygame.K_DOWN: ACTION_DOWN,
+    pygame.K_s: ACTION_DOWN,
+}
+
+# Map named actions to actual movements
+action_to_movement = {
+    ACTION_LEFT: (-1, 0),
+    ACTION_RIGHT: (1, 0),
+    ACTION_UP: (0, -1),
+    ACTION_DOWN: (0, 1),
+}
+
+
 class PygameRenderer:
     def __init__(self, world: MouseWorld):
         self.world = world
@@ -30,6 +59,7 @@ class PygameRenderer:
         }
         self.view_mode = "global"
         self.action_history = []
+        self.small_font = pygame.font.Font(None, 24)
 
         # Initialize pygame_gui
         self.ui_manager = pygame_gui.UIManager((self.screen_width, self.screen_height))
@@ -85,29 +115,68 @@ class PygameRenderer:
     def draw_world(self):
         self.screen.fill((0, 0, 0))  # Black background
 
-        # Draw global view
-        global_surface = pygame.Surface((self.world_width, self.world_height))
-        global_surface.fill((0, 0, 0))
-        self.draw_global_view(global_surface)
-        self.screen.blit(global_surface, (0, 100))
-        pygame.draw.rect(self.screen, (255, 255, 255), (0, 100, self.world_width, self.world_height), 2)
+        if self.view_mode == "global":
+            # Draw global view
+            global_surface = pygame.Surface((self.world_width, self.world_height))
+            global_surface.fill((0, 0, 0))
+            self.draw_global_view(global_surface)
+            self.screen.blit(global_surface, (0, 100))
+            pygame.draw.rect(
+                self.screen,
+                (255, 255, 255),
+                (0, 100, self.world_width, self.world_height),
+                2,
+            )
 
-        # Draw agent view
-        agent_surface = pygame.Surface((3 * self.cell_size, 3 * self.cell_size))
-        agent_surface.fill((0, 0, 0))
-        self.draw_agent_view(agent_surface)
-        self.screen.blit(agent_surface, (self.world_width + 25, 100))
-        pygame.draw.rect(self.screen, (255, 255, 255), (self.world_width + 25, 100, 3 * self.cell_size, 3 * self.cell_size), 2)
+            # Draw agent view
+            agent_surface = pygame.Surface((3 * self.cell_size, 3 * self.cell_size))
+            agent_surface.fill((0, 0, 0))
+            self.draw_agent_view(agent_surface)
+            self.screen.blit(agent_surface, (self.world_width + 25, 100))
+            pygame.draw.rect(
+                self.screen,
+                (255, 255, 255),
+                (self.world_width + 25, 100, 3 * self.cell_size, 3 * self.cell_size),
+                2,
+            )
+        elif self.view_mode == "agent":
+            # Draw stats page
+            stats_surface = pygame.Surface((self.world_width, self.world_height))
+            stats_surface.fill((0, 0, 0))
+            self.draw_stats_page(stats_surface)
+            self.screen.blit(stats_surface, (0, 100))
+
+        # Draw action history
+        history_text = self.small_font.render("Action History:", True, (255, 255, 255))
+        self.screen.blit(history_text, (10, self.screen_height - 150))
+
+        for i, action in enumerate(self.action_history[-5:]):
+            action_text = self.small_font.render(f"{action}", True, (255, 255, 255))
+            self.screen.blit(action_text, (10, self.screen_height - 120 + i * 20))
 
         self.ui_manager.draw_ui(self.screen)
         pygame.display.flip()
+
+    def draw_stats_page(self, surface):
+        # Add stats information here
+        stats = [
+            f"Score: {self.world.score}",
+            f"Actions taken: {len(self.action_history)}",
+            f"Food collected: {self.world.food_eaten}",
+            f"Walls hit: {self.world.walls_hit}",
+            f"Time elapsed: {pygame.time.get_ticks() // 1000} seconds",
+        ]
+
+        for i, stat in enumerate(stats):
+            stat_text = self.small_font.render(stat, True, (255, 255, 255))
+            surface.blit(stat_text, (10, 10 + i * 30))
 
     def play(self):
         clock = pygame.time.Clock()
         running = True
         action = None
         action_timer = 0
-        action_delay = 1000 / 10  # 10 actions per second (1000ms / 10)
+
         while running:
             time_delta = clock.tick(60) / 1000.0
 
@@ -115,21 +184,10 @@ class PygameRenderer:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        action = (-1, 0)
-                    elif event.key == pygame.K_RIGHT:
-                        action = (1, 0)
-                    elif event.key == pygame.K_UP:
-                        action = (0, -1)
-                    elif event.key == pygame.K_DOWN:
-                        action = (0, 1)
+                    if event.key in controls_to_actions:
+                        action = controls_to_actions[event.key]
                 elif event.type == pygame.KEYUP:
-                    if event.key in (
-                        pygame.K_LEFT,
-                        pygame.K_RIGHT,
-                        pygame.K_UP,
-                        pygame.K_DOWN,
-                    ):
+                    if event.key in controls_to_actions:
                         action = None
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:  # Left mouse button
@@ -152,7 +210,7 @@ class PygameRenderer:
 
             current_time = pygame.time.get_ticks()
             if action and current_time - action_timer > action_delay:
-                self.world.step(action)
+                self.world.step(action_to_movement[action])
                 self.action_history.append(action)
                 action_timer = current_time
 
