@@ -171,6 +171,18 @@ class PygameRenderer:
             stat_text = self.small_font.render(stat, True, (255, 255, 255))
             surface.blit(stat_text, (10, 10 + i * 30))
 
+        # Draw agent view
+        agent_surface = pygame.Surface((3 * self.cell_size, 3 * self.cell_size))
+        agent_surface.fill((0, 0, 0))
+        self.draw_agent_view(agent_surface)
+        self.screen.blit(agent_surface, (self.world_width + 25, 100))
+        pygame.draw.rect(
+            self.screen,
+            (255, 255, 255),
+            (self.world_width + 25, 100, 3 * self.cell_size, 3 * self.cell_size),
+            2,
+        )
+
     def play(self):
         clock = pygame.time.Clock()
         running = True
