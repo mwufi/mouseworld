@@ -57,12 +57,14 @@ class PygameRenderer:
     def play(self):
         clock = pygame.time.Clock()
         running = True
+        action = None
+        action_timer = 0
+        action_delay = 1000 / 10  # 10 actions per second (1000ms / 10)
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
-                    action = None
                     if event.key == pygame.K_LEFT:
                         action = (-1, 0)
                     elif event.key == pygame.K_RIGHT:
@@ -71,9 +73,24 @@ class PygameRenderer:
                         action = (0, -1)
                     elif event.key == pygame.K_DOWN:
                         action = (0, 1)
+                elif event.type == pygame.KEYUP:
+                    if event.key in (
+                        pygame.K_LEFT,
+                        pygame.K_RIGHT,
+                        pygame.K_UP,
+                        pygame.K_DOWN,
+                    ):
+                        action = None
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:  # Left mouse button
+                        x, y = event.pos
+                        grid_x, grid_y = x // self.cell_size, y // self.cell_size
+                        self.world.add(Food(position=(grid_x, grid_y)))
 
-                    if action:
-                        self.world.step(action)
+            current_time = pygame.time.get_ticks()
+            if action and current_time - action_timer > action_delay:
+                self.world.step(action)
+                action_timer = current_time
 
             self.draw_world()
             clock.tick(60)  # 60 FPS
