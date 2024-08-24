@@ -99,7 +99,7 @@ class MouseWorld:
         self.grid[position] = self.EMPTY
         self.positions[entity_type].remove(position)
 
-    def step(self, action: Tuple[int, int]):
+    def step(self, action: Tuple[int, int], observation_size: int = 3):
         if self.AGENT in self.positions and self.positions[self.AGENT]:
             agent_position = self.positions[self.AGENT][0]  # Assume only one agent
             self.move_agent(agent_position, action)
@@ -108,8 +108,8 @@ class MouseWorld:
 
         # Return the new state, reward, and whether the episode is done
         observation = self.get_observation(
-            self.positions[self.AGENT][0], 3
-        )  # Assuming a 3x3 view
+            self.positions[self.AGENT][0], observation_size
+        )
         reward = self.score
         done = False  # You might want to define conditions for when an episode is done
         return observation, reward, done

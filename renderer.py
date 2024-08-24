@@ -222,7 +222,7 @@ class PygameRenderer:
 
             current_time = pygame.time.get_ticks()
             if action and current_time - action_timer > action_delay:
-                self.world.step(action_to_movement[action])
+                self.world.step(action_to_movement[action], observation_size=5)
                 self.action_history.append(action)
                 action_timer = current_time
 
@@ -235,7 +235,7 @@ class PygameRenderer:
 
 # Example usage
 if __name__ == "__main__":
-    m = MouseWorld(size=(20, 10))
+    m = MouseWorld(size=(12, 12))
     m.add(Agent(position=(0, 0)))
     m.add(Food(position=(1, 1)))
     m.add(Wall(position=(2, 2)))
