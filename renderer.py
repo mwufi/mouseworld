@@ -4,6 +4,33 @@ import sys
 from mouseworld import MouseWorld, Agent, Food, Wall
 
 
+class EntityRenderer:
+    def __init__(self, cell_size: int):
+        self.cell_size = cell_size
+
+    def draw_agent(self, screen, position, color):
+        x, y = position
+        center = (int((x + 0.5) * self.cell_size), int((y + 0.5) * self.cell_size))
+        pygame.draw.circle(screen, color, center, self.cell_size // 3)
+
+    def draw_food(self, screen, position, color):
+        x, y = position
+        center = (int((x + 0.5) * self.cell_size), int((y + 0.5) * self.cell_size))
+        points = [
+            (center[0], center[1] - self.cell_size // 3),
+            (center[0] - self.cell_size // 3, center[1] + self.cell_size // 3),
+            (center[0] + self.cell_size // 3, center[1] + self.cell_size // 3),
+        ]
+        pygame.draw.polygon(screen, color, points)
+
+    def draw_wall(self, screen, position, color):
+        x, y = position
+        rect = pygame.Rect(
+            x * self.cell_size, y * self.cell_size, self.cell_size, self.cell_size
+        )
+        pygame.draw.rect(screen, color, rect)
+
+
 class PygameRenderer:
     def __init__(self, world: MouseWorld):
         self.world = world
@@ -19,26 +46,16 @@ class PygameRenderer:
             world.WALL: (128, 128, 128),  # Gray
         }
         self.font = pygame.font.Font(None, 36)
+        self.entity_renderer = EntityRenderer(self.cell_size)
+        self.renderers = {
+            world.AGENT: self.entity_renderer.draw_agent,
+            world.FOOD: self.entity_renderer.draw_food,
+            world.WALL: self.entity_renderer.draw_wall,
+        }
 
     def draw_entity(self, entity_type, position):
-        x, y = position
-        center = (int((x + 0.5) * self.cell_size), int((y + 0.5) * self.cell_size))
-        if entity_type == self.world.AGENT:
-            pygame.draw.circle(
-                self.screen, self.colors[entity_type], center, self.cell_size // 3
-            )
-        elif entity_type == self.world.FOOD:
-            points = [
-                (center[0], center[1] - self.cell_size // 3),
-                (center[0] - self.cell_size // 3, center[1] + self.cell_size // 3),
-                (center[0] + self.cell_size // 3, center[1] + self.cell_size // 3),
-            ]
-            pygame.draw.polygon(self.screen, self.colors[entity_type], points)
-        elif entity_type == self.world.WALL:
-            rect = pygame.Rect(
-                x * self.cell_size, y * self.cell_size, self.cell_size, self.cell_size
-            )
-            pygame.draw.rect(self.screen, self.colors[entity_type], rect)
+        if entity_type in self.renderers:
+            self.renderers[entity_type](self.screen, position, self.colors[entity_type])
 
     def draw_world(self):
         self.screen.fill((0, 0, 0))  # Black background
@@ -52,6 +69,7 @@ class PygameRenderer:
         )
         self.screen.blit(score_text, (10, 10))
 
+        # Update the display to show the newly drawn frame
         pygame.display.flip()
 
     def play(self):
