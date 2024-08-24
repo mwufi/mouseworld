@@ -60,20 +60,26 @@ class PygameRenderer:
         if entity_type in self.renderers:
             x, y = position
             adjusted_position = (x, y + 1)  # Adjust y-position to account for tabs
-            self.renderers[entity_type](self.screen, adjusted_position, self.colors[entity_type])
+            self.renderers[entity_type](
+                self.screen, adjusted_position, self.colors[entity_type]
+            )
 
     def draw_tabs(self):
         global_tab = pygame.Rect(0, 0, self.screen_width // 2, 50)
         agent_tab = pygame.Rect(self.screen_width // 2, 0, self.screen_width // 2, 50)
-        
+
         pygame.draw.rect(self.screen, (200, 200, 200), global_tab)
         pygame.draw.rect(self.screen, (200, 200, 200), agent_tab)
-        
+
         global_text = self.font.render("Global View", True, (0, 0, 0))
         agent_text = self.font.render("Agent View", True, (0, 0, 0))
-        
-        self.screen.blit(global_text, (global_tab.centerx - global_text.get_width() // 2, 10))
-        self.screen.blit(agent_text, (agent_tab.centerx - agent_text.get_width() // 2, 10))
+
+        self.screen.blit(
+            global_text, (global_tab.centerx - global_text.get_width() // 2, 10)
+        )
+        self.screen.blit(
+            agent_text, (agent_tab.centerx - agent_text.get_width() // 2, 10)
+        )
 
     def draw_global_view(self):
         for entity_type, positions in self.world.positions.items():
@@ -81,21 +87,26 @@ class PygameRenderer:
                 self.draw_entity(entity_type, position)
 
     def draw_agent_view(self):
-        if self.world.AGENT in self.world.positions and self.world.positions[self.world.AGENT]:
+        if (
+            self.world.AGENT in self.world.positions
+            and self.world.positions[self.world.AGENT]
+        ):
             agent_position = self.world.positions[self.world.AGENT][0]
             observation = self.world.get_observation(agent_position, 3)
-            
+
             # Draw agent's observation
             for i in range(3):
                 for j in range(3):
                     entity_type = observation[i, j]
                     position = (i + 3, j + 3)  # Offset to center of screen
                     self.draw_entity(entity_type, position)
-            
+
             # Draw action history
-            history_text = self.small_font.render("Action History:", True, (255, 255, 255))
+            history_text = self.small_font.render(
+                "Action History:", True, (255, 255, 255)
+            )
             self.screen.blit(history_text, (10, self.screen_height - 150))
-            
+
             for i, action in enumerate(self.action_history[-5:]):
                 action_text = self.small_font.render(f"{action}", True, (255, 255, 255))
                 self.screen.blit(action_text, (10, self.screen_height - 120 + i * 20))
@@ -103,7 +114,7 @@ class PygameRenderer:
     def draw_world(self):
         self.screen.fill((0, 0, 0))  # Black background
         self.draw_tabs()
-        
+
         if self.view_mode == "global":
             self.draw_global_view()
         else:
@@ -149,9 +160,14 @@ class PygameRenderer:
                     if event.button == 1:  # Left mouse button
                         x, y = event.pos
                         if y < 50:  # Click on tabs
-                            self.view_mode = "global" if x < self.screen_width // 2 else "agent"
+                            self.view_mode = (
+                                "global" if x < self.screen_width // 2 else "agent"
+                            )
                         else:
-                            grid_x, grid_y = x // self.cell_size, (y - 50) // self.cell_size
+                            grid_x, grid_y = (
+                                x // self.cell_size,
+                                (y - 50) // self.cell_size,
+                            )
                             self.world.add(Food(position=(grid_x, grid_y)))
 
             current_time = pygame.time.get_ticks()
