@@ -1,17 +1,35 @@
-# mouseworld
+# MouseWorld: A Research Environment for AI Agents
 
-Describe your project here.
+![MouseWorld Screenshot](/blob/main/docs/renderer.png)
 
-we are making a game called mouseworld, where there is an environment that the ai agent can interact with
+MouseWorld is a flexible and interactive research environment designed for studying AI agent behavior and decision-making processes. It provides a customizable grid-based world where agents can navigate, interact with objects, and learn from their environment.
 
-data storage: numpy array
-observations to the agent are an NxN subset of stuff around the agent
+## Features
 
-m = MouseWorld(size=(10,10))
-m.add(Agent(position=(0,0)))
-m.add(Food(position=(1,1)))
-m.add(Wall(position=(2,2)))
+- Customizable grid-based environment
+- Multiple entity types: Agent, Food, and Wall
+- Flexible observation system (NxN subset around the agent)
+- Interactive visualization using Pygame
+- Benchmarking tools for performance analysis
+
+## Screenshots
+
+![MouseWorld Benchmark](/blob/main/docs/benchmark.png)
+_Benchmark results for different world sizes and configurations_
+
+## Quick Start
+
+Here's a simple example to get you started with MouseWorld:
+
+```python
+from mouseworld import MouseWorld, Agent, Food, Wall
+
+world = MouseWorld(size=(10, 10))
+world.add(Agent(position=(0, 0)))
+world.add(Food(position=(1, 1)))
+world.add(Wall(position=(2, 2)))
 
 # interactive!
-p = PygameRenderer(m)
+p = PygameRenderer(world)
 p.play()
+```
