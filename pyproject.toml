@@ -5,7 +5,10 @@ description = "Add your description here"
 authors = [
     { name = "Zen", email = "ztang230@gmail.com" }
 ]
-dependencies = []
+dependencies = [
+    "numpy>=2.1.0",
+    "pygame>=2.6.0",
+]
 readme = "README.md"
 requires-python = ">= 3.8"
 
