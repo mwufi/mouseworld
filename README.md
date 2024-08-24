@@ -1,6 +1,6 @@
 # MouseWorld: A Research Environment for AI Agents
 
-![MouseWorld Screenshot](/blob/main/docs/renderer.png)
+![MouseWorld Screenshot](/docs/renderer.png)
 
 MouseWorld is a flexible and interactive research environment designed for studying AI agent behavior and decision-making processes. It provides a customizable grid-based world where agents can navigate, interact with objects, and learn from their environment.
 
@@ -14,7 +14,7 @@ MouseWorld is a flexible and interactive research environment designed for study
 
 ## Screenshots
 
-![MouseWorld Benchmark](/blob/main/docs/benchmark.png)
+![MouseWorld Benchmark](/docs/benchmark.png)
 _Benchmark results for different world sizes and configurations_
 
 ## Quick Start
